@@ -1,0 +1,356 @@
+{
+  "name": "ILJIN GPT Basic Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "iljin-gpt",
+        "responseMode": "responseNode",
+        "options": {
+          "binaryPropertyName": "file"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1216,
+        416
+      ],
+      "id": "webhook-start",
+      "name": "Webhook",
+      "webhookId": "iljin-gpt-webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 입력 획득\nconst item = $input.first();\nconst json = item.json || {};\nconst binaries = item.binary || {};\n\n// ---------------------------------------------\n// 1) query 값 보정 (Webhook 노드의 출력 구조 처리)\n// ---------------------------------------------\n// Webhook 노드는 JSON body를 json.body 또는 직접 json에 넣을 수 있음\nlet body = json.body || json;\nif (!body || typeof body !== 'object') {\n  body = {};\n}\n\nconst query = body.query || json.query || \"\";\n\n// ---------------------------------------------\n// 2) conversationId 보정\n// ---------------------------------------------\nconst conversationId =\n  body.conversationId || json.conversationId ||\n  Math.floor(1000 + Math.random() * 9000).toString();\n\n// ---------------------------------------------\n// 3) mode 값 보정 (general, esrs, rba, document)\n// ---------------------------------------------\nconst mode = body.mode || json.mode || \"general\";\n\n// ---------------------------------------------\n// 4) 파일 확인 (file 또는 file0)\n// ---------------------------------------------\nlet hasFile = false;\nif (binaries.file && !binaries.file0) {\n  binaries.file0 = binaries.file;\n}\n\nif (binaries.file0) {\n  hasFile = true;\n}\n\n// ---------------------------------------------\n// 5) 파일이 없는 경우\n// ---------------------------------------------\nif (!hasFile) {\n  return [\n    {\n      json: {\n        hasFile: false,\n        text: \"\",\n        query,\n        conversationId,\n        mode\n      }\n    }\n  ];\n}\n\n// ---------------------------------------------\n// 6) 파일이 있는 경우\n// ---------------------------------------------\nreturn [\n  {\n    json: {\n      hasFile: true,\n      query,\n      conversationId,\n      mode: \"document\"\n    },\n    binary: binaries\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1040,
+        416
+      ],
+      "id": "js-input-validation",
+      "name": "JSCode(입력변수검증)",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "file-check-condition",
+              "leftValue": "={{$json.hasFile}}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -864,
+        272
+      ],
+      "id": "if-file-check",
+      "name": "If(파일 포함 여부)",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "binaryPropertyName": "file0"
+      },
+      "type": "n8n-nodes-upstage.documentParsingUpstage",
+      "typeVersion": 1,
+      "position": [
+        -704,
+        112
+      ],
+      "id": "upstage-doc-parse",
+      "name": "Upstage Document Parse",
+      "credentials": {
+        "upstageApi": {
+          "id": "upstage-api-cred",
+          "name": "Upstage API"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "prompt-assignment",
+              "name": "prompt",
+              "value": "=[문서내용]\n{{ $json.text }}\n\n[질문]\n{{ $('JSCode(입력변수검증)').item.json.query }}",
+              "type": "string"
+            },
+            {
+              "id": "conversation-id-assignment",
+              "name": "conversationId",
+              "value": "={{ $('JSCode(입력변수검증)').item.json.conversationId }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -464,
+        224
+      ],
+      "id": "set-llm-input-file",
+      "name": "LLM입력으로구성(파일있음)"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "prompt-assignment-no-file",
+              "name": "prompt",
+              "value": "={{ $('JSCode(입력변수검증)').item.json.query }}",
+              "type": "string"
+            },
+            {
+              "id": "conversation-id-assignment-no-file",
+              "name": "conversationId",
+              "value": "={{ $('JSCode(입력변수검증)').item.json.conversationId }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -464,
+        416
+      ],
+      "id": "set-llm-input-no-file",
+      "name": "LLM입력으로구성(파일없음)"
+    },
+    {
+      "parameters": {
+        "model": "solar-pro2",
+        "options": {}
+      },
+      "type": "n8n-nodes-upstage.lmChatModelUpstage",
+      "typeVersion": 1,
+      "position": [
+        -64,
+        208
+      ],
+      "id": "upstage-solar-chat",
+      "name": "Upstage Solar Chat for Agent",
+      "credentials": {
+        "upstageApi": {
+          "id": "upstage-api-cred",
+          "name": "Upstage API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.conversationId }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        80,
+        224
+      ],
+      "id": "simple-memory",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.prompt }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "ai-agent",
+      "name": "AI Agent",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ \n  JSON.stringify(\n    $json.error \n      ? {\n          success: false,\n          message: $json.error.message || \"요청 처리 중 오류 발생\",\n          executionId: $execution.id,\n          data: {\n            errorCode: $json.error.httpCode || 500,\n            errorDetail: $json.error.stack || \"\",\n            node: $json.node || \"\",\n            timestamp: $json.timestamp || new Date().toISOString()\n          }\n        }\n      : {\n          success: true,\n          message: \"ok\",\n          executionId: $execution.id,\n          data: {\n            text: $json.output ? $json.output.replace(/\\r?\\n/g, \"\\\\n\") : \"\"\n          }\n        }\n  )\n}}\n",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        512,
+        592
+      ],
+      "id": "respond-to-webhook",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "JSCode(입력변수검증)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JSCode(입력변수검증)": {
+      "main": [
+        [
+          {
+            "node": "If(파일 포함 여부)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If(파일 포함 여부)": {
+      "main": [
+        [
+          {
+            "node": "Upstage Document Parse",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "LLM입력으로구성(파일없음)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upstage Document Parse": {
+      "main": [
+        [
+          {
+            "node": "LLM입력으로구성(파일있음)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LLM입력으로구성(파일있음)": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LLM입력으로구성(파일없음)": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upstage Solar Chat for Agent": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "iljin-gpt-basic-v1",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "iljin-gpt-instance"
+  },
+  "id": "iljin-gpt-basic",
+  "tags": []
+}
+
+
+
+

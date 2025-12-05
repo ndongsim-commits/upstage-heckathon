@@ -1,0 +1,56 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info
+dist
+build
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Environment variables
+.env
+.env.local
+
+# Cache
+.cache/
+*.cache
+
+# Documentation
+*.md
+!README.md
+
+# n8n files (not needed for Streamlit app)
+n8n_*.json
+n8n_*.md
+
+# Test files
+test/
+tests/
+*.test.py
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+

@@ -1,0 +1,38 @@
+# requirements.txt for Vercel deployment
+# Note: Some packages may need to be adjusted for Vercel's serverless environment
+
+# Core dependencies
+streamlit>=1.32.2
+python-dotenv>=1.0.1
+
+# LangChain dependencies
+langchain>=0.3.0
+langchain-core>=0.3.0
+langchain-community>=0.3.0
+langchain-openai>=0.2.0
+langchain-upstage>=0.3.0
+langchain-text-splitters>=0.3.0
+langchain-chroma>=0.1.0
+
+# Data processing
+pandas>=2.2.2
+rank-bm25>=0.2.2
+
+# PDF processing (lightweight versions)
+pymupdf>=1.24.1
+pypdf>=4.2.0
+
+# Embeddings
+sentence-transformers>=2.2.2
+
+# Vector database
+faiss-cpu>=1.8.0
+chromadb>=0.4.24
+
+# Utilities
+pydantic>=2.7.4
+tiktoken>=0.7.0
+
+# Note: Some heavy dependencies like torch, torchvision may need to be removed
+# or replaced with lighter alternatives for Vercel deployment
+
