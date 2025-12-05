@@ -1,5 +1,5 @@
 import streamlit as st
-from langchain_core.messages.chat import ChatMessage
+from chat_message import ChatMessage
 from langchain_openai import ChatOpenAI
 from dotenv import load_dotenv
 from langchain_core.output_parsers import StrOutputParser
