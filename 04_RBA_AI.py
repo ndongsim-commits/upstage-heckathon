@@ -6,7 +6,6 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_teddynote.prompts import load_prompt
 
 from langchain_core.runnables import RunnablePassthrough
-from langchain_openai import ChatOpenAI
 from langchain_community.chat_models import ChatOllama
 from langchain_teddynote import logging
 import os
