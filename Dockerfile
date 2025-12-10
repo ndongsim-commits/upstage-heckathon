@@ -21,8 +21,8 @@ COPY . .
 EXPOSE 8501
 
 # Streamlit 실행 (Railway의 PORT 환경 변수 사용)
-# 쉘 형식으로 변경하여 환경 변수 확장 보장
-CMD streamlit run main.py --server.port=${PORT:-8501} --server.address=0.0.0.0 --server.headless=true
+# JSON 형식으로 변경하여 Docker 경고 해결
+CMD ["sh", "-c", "streamlit run main.py --server.port=${PORT:-8501} --server.address=0.0.0.0 --server.headless=true"]
 
 
 
