@@ -8,23 +8,25 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Poetry 설치
-RUN pip install --no-cache-dir poetry
-
-# Poetry 설정 (가상환경 비활성화)
-RUN poetry config virtualenvs.create false
-
 # 의존성 파일 복사 및 설치
-COPY pyproject.toml poetry.lock ./
-RUN poetry install --no-dev --no-interaction --no-ansi
+COPY requirements.txt ./
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
 # 앱 코드 복사
 COPY . .
 
-# 포트 노출
+# 포트 노출 (Railway는 동적 포트를 사용하므로 EXPOSE는 선택사항)
+# Railway는 자동으로 포트를 처리하므로 EXPOSE는 필요 없지만, 명시적으로 표시
 EXPOSE 8501
 
-# Streamlit 실행
-CMD ["streamlit", "run", "main.py", "--server.port=8501", "--server.address=0.0.0.0", "--server.headless=true"]
+# Streamlit 실행 (Railway의 PORT 환경 변수 사용)
+# 쉘 형식으로 변경하여 환경 변수 확장 보장
+CMD streamlit run main.py --server.port=${PORT:-8501} --server.address=0.0.0.0 --server.headless=true
+
+
+
+
+
 
 
