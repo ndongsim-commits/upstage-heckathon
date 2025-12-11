@@ -2,7 +2,6 @@ from langchain_core.messages import AIMessageChunk
 from typing import Any, Dict, List, Callable
 from dataclasses import dataclass
 from langchain_core.agents import AgentAction, AgentFinish, AgentStep
-from langchain.agents.output_parsers.tools import ToolAgentAction
 from langchain_core.messages import BaseMessage
 
 
@@ -108,7 +107,7 @@ class AgentStreamParser:
             actions (List[Any]): The list of actions to be processed
         """
         for action in actions:
-            if isinstance(action, (AgentAction, ToolAgentAction)) and hasattr(
+            if isinstance(action, AgentAction) and hasattr(
                 action, "tool"
             ):
                 self._process_tool_call(action)
