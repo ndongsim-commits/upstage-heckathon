@@ -13,7 +13,7 @@ import re
 from langchain_core.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
 from langchain_community.chat_models import ChatOllama
-from langchain.chains.combine_documents.stuff import create_stuff_documents_chain
+from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.documents import Document
 
 from langchain_teddynote.models import MultiModal
